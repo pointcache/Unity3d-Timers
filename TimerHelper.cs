@@ -10,6 +10,12 @@ namespace USS.Timers
     /// </summary>
     public class TimerHelper : MonoBehaviour
     {
+        /// <summary>
+        /// Viewing timers can be costly, do we want to pause polling?
+        /// </summary>
+        public bool UpdateViewer = true;
+        public TimerHelperData viewer = new TimerHelperData();
+
         private static TimerHelper _instance;
         public static TimerHelper instance
         {
@@ -37,6 +43,16 @@ namespace USS.Timers
         void Update()
         {
             Timer.UpdateAllTimers();
+            if (UpdateViewer)
+                Timer.POLL_TIMER_DATA(viewer);
+        }
+
+        [System.Serializable]
+        public class TimerHelperData
+        {
+            public int FreeTimers;
+            public int WorkingTimers;
+            public int AllTimers;
         }
     }
 }
