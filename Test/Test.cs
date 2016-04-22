@@ -46,8 +46,6 @@ namespace USS.Timers
                 , new object[1] { go });
         }
 
-        
-
         //Casting is costly, this is just example
         void Reposition(object[] args)
         {

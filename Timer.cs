@@ -42,8 +42,6 @@ namespace USS.Timers
         /// </summary>
         public float ElapsedCycles { get { return behaviorBase.ElapsedCycles; } }
 
-
-
         void Update(float REAL_DELTA, float TIMESCALE_DELTA)
         {
             //first check for potential problems
@@ -72,7 +70,7 @@ namespace USS.Timers
             return this;
         }
 
-        Timer SetBehavior<T>() where T: TimerBehaviorBase , new()
+        Timer SetBehavior<T>() where T : TimerBehaviorBase, new()
         {
             Type t = typeof(T);
             ITimerBehavior behav = null;
@@ -91,13 +89,13 @@ namespace USS.Timers
             registerBehavior(behav);
             return this;
         }
-        
+
         public void Destroy()
         {
             TimerManager.ReleaseTimer(this);
         }
 
-        
+
         /// <summary>
         /// Do we use Time.deltaTime OR Time.unscaledTimeDelta
         /// unscaled means not affected by Time scale, by default all timers ARE affected by timescale
@@ -110,7 +108,7 @@ namespace USS.Timers
             return this;
         }
 
-        
+
         public Timer SetCallbacks(Action c1)
         {
             behaviorBase.SetCallbacks(c1, null, null, null);
@@ -140,7 +138,7 @@ namespace USS.Timers
         /// </summary>
         public class TimerBehaviorBase
         {
-            
+
             public bool Completed { get; protected set; }
             public Timer timer;
             public float TotalTimeActive { get; protected set; }
@@ -168,7 +166,7 @@ namespace USS.Timers
                 TotalTimeActive = 0f;
                 MainInterval = 0f;
                 Completed = false;
-                
+
                 parameters = null;
                 c1 = c2 = c3 = c4 = null;
                 hasParameters = false;
@@ -182,13 +180,13 @@ namespace USS.Timers
             {
                 if (!hasParameters && c1 == null && c2 == null && c3 == null && c4 == null)
                 {
-                    Debug.LogError("Timer cant have zero callbacks, such timer is useless. Make sure to add a callback before the timer" + 
+                    Debug.LogError("Timer cant have zero callbacks, such timer is useless. Make sure to add a callback before the timer" +
                          "starts execution");
                     Debug.Break();
                 }
                 if (hasParameters && paramC1 == null && paramC2 == null)
                 {
-                    Debug.LogError("Timer cant have zero parameter callbacks, such timer is useless. Make sure to add a callback before the timer" + 
+                    Debug.LogError("Timer cant have zero parameter callbacks, such timer is useless. Make sure to add a callback before the timer" +
                          "starts execution");
                     Debug.Break();
                 }
@@ -248,7 +246,8 @@ namespace USS.Timers
                 //update all timers
                 for (int i = 0; i < c; i++)
                 {
-                    workingTimers[i].Update(Time.unscaledDeltaTime, Time.deltaTime);
+                    if (!workingTimers[i].wasDestroyed)
+                        workingTimers[i].Update(Time.unscaledDeltaTime, Time.deltaTime);
                 }
                 c = toRemove.Count;
                 for (int i = 0; i < c; i++)
