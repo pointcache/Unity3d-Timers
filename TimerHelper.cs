@@ -42,9 +42,9 @@ namespace USS.Timers
 
         void Update()
         {
-            Timer.UpdateAllTimers();
+            Timer.TimerManager.UpdateAllTimers();
             if (UpdateViewer)
-                Timer.POLL_TIMER_DATA(viewer);
+                Timer.TimerManager.POLL_TIMER_DATA(viewer);
         }
 
         [System.Serializable]

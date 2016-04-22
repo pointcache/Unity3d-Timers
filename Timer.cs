@@ -9,126 +9,15 @@ namespace USS.Timers
     /// </summary>
     public partial class Timer
     {
-        #region static part - this part manages timer and its behaviors pooling
-        
-
         /// <summary>
-        /// Behavior objects pool 
+        /// Implementers create behavior
         /// </summary>
-        static Dictionary<Type, List<ITimerBehavior>> behaviors = new Dictionary<Type, List<ITimerBehavior>>();
-        static List<Timer> workingTimers = new List<Timer>();
-        static List<Timer> freeTimers = new List<Timer>();
-        static List<Timer> toRemove = new List<Timer>();
-
-        public static void POLL_TIMER_DATA(TimerHelper.TimerHelperData data)
+        public interface ITimerBehavior
         {
-            data.FreeTimers = freeTimers.Count;
-            data.WorkingTimers = workingTimers.Count;
-            data.AllTimers = data.FreeTimers + data.WorkingTimers;
+            void Initialize();
+            void Update(float deltaTime);
         }
 
-        public static void UpdateAllTimers()
-        {
-            int c = workingTimers.Count;
-            //update all timers
-            for (int i = 0; i < c; i++)
-            {
-                workingTimers[i].Update(Time.unscaledDeltaTime, Time.deltaTime);
-            }
-            c = toRemove.Count;
-            for (int i = 0; i < c; i++)
-            {
-                workingTimers.Remove(toRemove[i]);
-            }
-            toRemove.Clear();
-        }
-
-        //again shortening common actions
-        Timer registerBehavior(ITimerBehavior behav)
-        {
-            behavior = behav;
-            behaviorBase = (TimerBehaviorBase)behavior;
-            behaviorBase.timer = this;
-            return this;
-        }
-
-        Timer SetBehavior<T>() where T: TimerBehaviorBase , new()
-        {
-            Type t = typeof(T);
-            ITimerBehavior behav = null;
-            if (behaviors.ContainsKey(t))
-            {
-                List<ITimerBehavior> list = behaviors[t];
-                if (list.Count > 0)
-                {
-                    behav = list[0];
-                    list.Remove(behav);
-                }
-            }
-            if (behav == null)
-                behav = (ITimerBehavior)new T();
-
-            registerBehavior(behav);
-            return this;
-        }
-        //attempt to get used timer from pool or make new
-        static Timer getTimer()
-        {
-            Timer t = null;
-            if (freeTimers.Count == 0)
-            {
-                t = newTimer();
-            }
-            else
-            {
-                t = freeTimers[0];
-                freeTimers.Remove(t);
-            }
-            //Just to make sure our Helper appears when we need it
-            if (TimerHelper.instance == null)
-            { }
-            registerTimer(t);
-            return t;
-        }
-        // avoiding boilerplate
-        static Timer newTimer()
-        {
-            Timer t = new Timer();
-            //easy way to get notified of which timer was stopped
-            t.OnStopped += ReleaseTimer;
-            return t;
-        }
-
-        static void registerTimer(Timer timer)
-        {
-            timer.wasDestroyed = false;
-            workingTimers.Add(timer);
-        }
-        //We do this at the end of timer lifecycle or when we destroy it
-        static void ReleaseTimer(Timer timer)
-        {
-            if (timer.wasDestroyed)
-                return;
-            freeTimers.Add(timer);
-            
-            //we use type as key to cache our behaviors
-            Type btype = timer.behavior.GetType();
-            if (!behaviors.ContainsKey(btype))
-                behaviors.Add(btype, new List<ITimerBehavior>());
-            behaviors[btype].Add(timer.behavior);
-
-            timer.behavior = null;
-            timer.behaviorBase.ResetEntity();
-            timer.wasDestroyed = true;
-            toRemove.Add(timer);
-        }
-
-        public void Destroy()
-        {
-            ReleaseTimer(this);
-        }
-
-        #endregion
         //DI defines what kind of timer this is
         ITimerBehavior behavior;
         //This base is shared between all types of timers
@@ -152,17 +41,8 @@ namespace USS.Timers
         /// Not all timers return this
         /// </summary>
         public float ElapsedCycles { get { return behaviorBase.ElapsedCycles; } }
-        /// <summary>
-        /// Do we use Time.deltaTime OR Time.unscaledTimeDelta
-        /// unscaled means not affected by Time scale, by default all timers ARE affected by timescale
-        /// </summary>
-        /// <param name="scaled"></param>
-        /// <returns></returns>
-        public Timer SetIgnoreTimeScale(bool ignoreTimeScale)
-        {
-            type = ignoreTimeScale ? TimeDeltaType.TimeScaleIndependent : TimeDeltaType.TimeScaleDependent;
-            return this;
-        }
+
+
 
         void Update(float REAL_DELTA, float TIMESCALE_DELTA)
         {
@@ -182,11 +62,65 @@ namespace USS.Timers
             }
         }
 
+
+        //again shortening common actions
+        Timer registerBehavior(ITimerBehavior behav)
+        {
+            behavior = behav;
+            behaviorBase = (TimerBehaviorBase)behavior;
+            behaviorBase.timer = this;
+            return this;
+        }
+
+        Timer SetBehavior<T>() where T: TimerBehaviorBase , new()
+        {
+            Type t = typeof(T);
+            ITimerBehavior behav = null;
+            if (TimerManager.behaviors.ContainsKey(t))
+            {
+                List<ITimerBehavior> list = TimerManager.behaviors[t];
+                if (list.Count > 0)
+                {
+                    behav = list[0];
+                    list.Remove(behav);
+                }
+            }
+            if (behav == null)
+                behav = (ITimerBehavior)new T();
+
+            registerBehavior(behav);
+            return this;
+        }
+        
+        public void Destroy()
+        {
+            TimerManager.ReleaseTimer(this);
+        }
+
+        
+        /// <summary>
+        /// Do we use Time.deltaTime OR Time.unscaledTimeDelta
+        /// unscaled means not affected by Time scale, by default all timers ARE affected by timescale
+        /// </summary>
+        /// <param name="scaled"></param>
+        /// <returns></returns>
+        public Timer SetIgnoreTimeScale(bool ignoreTimeScale)
+        {
+            type = ignoreTimeScale ? TimeDeltaType.TimeScaleIndependent : TimeDeltaType.TimeScaleDependent;
+            return this;
+        }
+
+        
+        public Timer SetCallbacks(Action<Timer> c1, Action<Timer> c2, Action<Timer> c3, Action<Timer> c4)
+        {
+            behaviorBase.SetCallbacks(c1, c2, c3, c4);
+            return this;
+        }
         
         /// <summary>
         /// base class for concrete implementations
         /// </summary>
-        private class TimerBehaviorBase
+        public class TimerBehaviorBase
         {
             
             public bool Completed { get; protected set; }
@@ -272,13 +206,92 @@ namespace USS.Timers
                 return this;
             }
         }
-        /// <summary>
-        /// Implementers create behavior
-        /// </summary>
-        private interface ITimerBehavior
+
+        public static class TimerManager
         {
-            void Initialize();
-            void Update(float deltaTime);
+            /// <summary>
+            /// Behavior objects pool 
+            /// </summary>
+            public static Dictionary<Type, List<ITimerBehavior>> behaviors = new Dictionary<Type, List<ITimerBehavior>>();
+            public static List<Timer> workingTimers = new List<Timer>();
+            public static List<Timer> freeTimers = new List<Timer>();
+            public static List<Timer> toRemove = new List<Timer>();
+
+            public static void POLL_TIMER_DATA(TimerHelper.TimerHelperData data)
+            {
+                data.FreeTimers = freeTimers.Count;
+                data.WorkingTimers = workingTimers.Count;
+                data.AllTimers = data.FreeTimers + data.WorkingTimers;
+            }
+
+            public static void UpdateAllTimers()
+            {
+                int c = workingTimers.Count;
+                //update all timers
+                for (int i = 0; i < c; i++)
+                {
+                    workingTimers[i].Update(Time.unscaledDeltaTime, Time.deltaTime);
+                }
+                c = toRemove.Count;
+                for (int i = 0; i < c; i++)
+                {
+                    workingTimers.Remove(toRemove[i]);
+                }
+                toRemove.Clear();
+            }
+
+            //attempt to get used timer from pool or make new
+            public static Timer getTimer()
+            {
+                Timer t = null;
+                if (freeTimers.Count == 0)
+                {
+                    t = newTimer();
+                }
+                else
+                {
+                    t = freeTimers[0];
+                    freeTimers.Remove(t);
+                }
+                //Just to make sure our Helper appears when we need it
+                if (TimerHelper.instance == null)
+                { }
+                registerTimer(t);
+                return t;
+            }
+            // avoiding boilerplate
+            public static Timer newTimer()
+            {
+                Timer t = new Timer();
+                //easy way to get notified of which timer was stopped
+                t.OnStopped += ReleaseTimer;
+                return t;
+            }
+
+            public static void registerTimer(Timer timer)
+            {
+                timer.wasDestroyed = false;
+                workingTimers.Add(timer);
+            }
+            //We do this at the end of timer lifecycle or when we destroy it
+            public static void ReleaseTimer(Timer timer)
+            {
+                if (timer.wasDestroyed)
+                    return;
+                freeTimers.Add(timer);
+
+                //we use type as key to cache our behaviors
+                Type btype = timer.behavior.GetType();
+                if (!behaviors.ContainsKey(btype))
+                    behaviors.Add(btype, new List<ITimerBehavior>());
+                behaviors[btype].Add(timer.behavior);
+
+                timer.behavior = null;
+                timer.behaviorBase.ResetEntity();
+                timer.wasDestroyed = true;
+                toRemove.Add(timer);
+            }
+
         }
     }
 }

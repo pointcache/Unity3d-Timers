@@ -16,7 +16,7 @@ namespace USS.Timers
         /// <returns></returns>
         public static Timer Repeater(float interval, Action<Timer> callback)
         {
-            Timer timer = getTimer();
+            Timer timer = TimerManager.getTimer();
             timer.SetBehavior<RepeaterBehavior>();
             timer.behaviorBase
                 .SetFloats(interval, 0, 0, 0)
@@ -35,7 +35,7 @@ namespace USS.Timers
         /// <returns></returns>
         public static Timer RepeaterParam(float interval, Action<Timer, object[]> callback, object[] parameters)
         {
-            Timer timer = getTimer();
+            Timer timer = TimerManager.getTimer();
             timer.SetBehavior<RepeaterBehavior>();
             timer.behaviorBase
                 .SetFloats(interval, 0, 0, 0)
@@ -80,7 +80,7 @@ namespace USS.Timers
         /// <returns></returns>
         public static Timer Countdown(float exitTime, Action<Timer> callback)
         {
-            Timer timer = getTimer();
+            Timer timer = TimerManager.getTimer();
             timer.SetBehavior<CountdownBehavior>();
             timer.behaviorBase
                 .SetFloats(exitTime, 0, 0, 0)
