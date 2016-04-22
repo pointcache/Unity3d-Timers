@@ -14,7 +14,7 @@ namespace USS.Timers
         /// <param name="interval"></param>
         /// <param name="callback">will happen each interval</param>
         /// <returns></returns>
-        public static Timer Repeater(float interval, Action<Timer> callback)
+        public static Timer Repeater(float interval, Action callback)
         {
             Timer timer = TimerManager.getTimer();
             timer.SetBehavior<RepeaterBehavior>();
@@ -33,7 +33,7 @@ namespace USS.Timers
         /// <param name="callback"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        public static Timer RepeaterParam(float interval, Action<Timer, object[]> callback, object[] parameters)
+        public static Timer RepeaterParam(float interval, Action<object[]> callback, object[] parameters)
         {
             Timer timer = TimerManager.getTimer();
             timer.SetBehavior<RepeaterBehavior>();
@@ -64,9 +64,9 @@ namespace USS.Timers
                 if (timePassed > MainInterval)
                 {
                     if (hasParameters)
-                        paramC1(timer, parameters);
+                        paramC1(parameters);
                     else
-                        c1(timer);
+                        c1();
                     timePassed = 0f + (timePassed % MainInterval);
                 }
             }
@@ -78,7 +78,7 @@ namespace USS.Timers
         /// <param name="interval"></param>
         /// <param name="callback">will happen each interval</param>
         /// <returns></returns>
-        public static Timer Countdown(float exitTime, Action<Timer> callback)
+        public static Timer Countdown(float exitTime, Action callback)
         {
             Timer timer = TimerManager.getTimer();
             timer.SetBehavior<CountdownBehavior>();
@@ -104,7 +104,7 @@ namespace USS.Timers
 
                 if (timePassed > exitTime)
                 {
-                    c1(timer);
+                    c1();
                     Completed = true;
                 }
             }

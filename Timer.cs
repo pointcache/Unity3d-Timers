@@ -111,12 +111,30 @@ namespace USS.Timers
         }
 
         
-        public Timer SetCallbacks(Action<Timer> c1, Action<Timer> c2, Action<Timer> c3, Action<Timer> c4)
+        public Timer SetCallbacks(Action c1)
+        {
+            behaviorBase.SetCallbacks(c1, null, null, null);
+            return this;
+        }
+
+        public Timer SetCallbacks(Action c1, Action c2)
+        {
+            behaviorBase.SetCallbacks(c1, c2, null, null);
+            return this;
+        }
+
+        public Timer SetCallbacks(Action c1, Action c2, Action c3)
+        {
+            behaviorBase.SetCallbacks(c1, c2, c3, null);
+            return this;
+        }
+
+        public Timer SetCallbacks(Action c1, Action c2, Action c3, Action c4)
         {
             behaviorBase.SetCallbacks(c1, c2, c3, c4);
             return this;
         }
-        
+
         /// <summary>
         /// base class for concrete implementations
         /// </summary>
@@ -131,9 +149,9 @@ namespace USS.Timers
             //Internally used floats
             protected float f1, f2, f3, f4;
             //callbacks
-            protected Action<Timer> c1, c2, c3, c4;
+            protected Action c1, c2, c3, c4;
             //callbacks with parameters
-            protected Action<Timer, object[]> paramC1, paramC2;
+            protected Action<object[]> paramC1, paramC2;
             //parameters array
             protected object[] parameters;
             protected bool hasParameters;
@@ -176,7 +194,7 @@ namespace USS.Timers
                 }
             }
 
-            public TimerBehaviorBase SetCallbacks(Action<Timer> one, Action<Timer> two, Action<Timer> three, Action<Timer> four)
+            public TimerBehaviorBase SetCallbacks(Action one, Action two, Action three, Action four)
             {
                 c1 = one;
                 c2 = two;
@@ -185,7 +203,7 @@ namespace USS.Timers
                 return this;
             }
 
-            public TimerBehaviorBase SetCallbacksWithParameters(Action<Timer, object[]> pc1, Action<Timer, object[]> pc2, object[] p)
+            public TimerBehaviorBase SetCallbacksWithParameters(Action<object[]> pc1, Action<object[]> pc2, object[] p)
             {
                 paramC1 = pc1;
                 paramC2 = pc2;
