@@ -18,6 +18,8 @@ namespace USS.Timers
             void Update(float deltaTime);
         }
 
+
+
         //DI defines what kind of timer this is
         ITimerBehavior behavior;
         //This base is shared between all types of timers
@@ -28,7 +30,7 @@ namespace USS.Timers
         public enum TimeDeltaType { TimeScaleDependent, TimeScaleIndependent }
         //Event signaling when some timer finished work and is ready to be released
         event Action<Timer> OnStopped;
-        bool wasDestroyed;
+        public bool WasDestroyed { get; private set; }
         /// <summary>
         /// Not all timer have one fixed interval
         /// </summary>
@@ -51,7 +53,7 @@ namespace USS.Timers
                 behavior.Update(TIMESCALE_DELTA);
             else
                 behavior.Update(REAL_DELTA);
-
+            
             //Notify pool if we completed work
             if (behaviorBase.Completed)
             {
@@ -70,7 +72,7 @@ namespace USS.Timers
             return this;
         }
 
-        Timer SetBehavior<T>() where T : TimerBehaviorBase, new()
+        Timer SetBehavior<T>() where T: TimerBehaviorBase , new()
         {
             Type t = typeof(T);
             ITimerBehavior behav = null;
@@ -89,13 +91,13 @@ namespace USS.Timers
             registerBehavior(behav);
             return this;
         }
-
+        
         public void Destroy()
         {
             TimerManager.ReleaseTimer(this);
         }
 
-
+        
         /// <summary>
         /// Do we use Time.deltaTime OR Time.unscaledTimeDelta
         /// unscaled means not affected by Time scale, by default all timers ARE affected by timescale
@@ -108,7 +110,7 @@ namespace USS.Timers
             return this;
         }
 
-
+        
         public Timer SetCallbacks(Action c1)
         {
             behaviorBase.SetCallbacks(c1, null, null, null);
@@ -138,7 +140,7 @@ namespace USS.Timers
         /// </summary>
         public class TimerBehaviorBase
         {
-
+            
             public bool Completed { get; protected set; }
             public Timer timer;
             public float TotalTimeActive { get; protected set; }
@@ -166,7 +168,7 @@ namespace USS.Timers
                 TotalTimeActive = 0f;
                 MainInterval = 0f;
                 Completed = false;
-
+                
                 parameters = null;
                 c1 = c2 = c3 = c4 = null;
                 hasParameters = false;
@@ -180,13 +182,13 @@ namespace USS.Timers
             {
                 if (!hasParameters && c1 == null && c2 == null && c3 == null && c4 == null)
                 {
-                    Debug.LogError("Timer cant have zero callbacks, such timer is useless. Make sure to add a callback before the timer" +
+                    Debug.LogError("Timer cant have zero callbacks, such timer is useless. Make sure to add a callback before the timer" + 
                          "starts execution");
                     Debug.Break();
                 }
                 if (hasParameters && paramC1 == null && paramC2 == null)
                 {
-                    Debug.LogError("Timer cant have zero parameter callbacks, such timer is useless. Make sure to add a callback before the timer" +
+                    Debug.LogError("Timer cant have zero parameter callbacks, such timer is useless. Make sure to add a callback before the timer" + 
                          "starts execution");
                     Debug.Break();
                 }
@@ -246,15 +248,19 @@ namespace USS.Timers
                 //update all timers
                 for (int i = 0; i < c; i++)
                 {
-                    if (!workingTimers[i].wasDestroyed)
+                    if(!workingTimers[i].WasDestroyed)
                         workingTimers[i].Update(Time.unscaledDeltaTime, Time.deltaTime);
                 }
+                
                 c = toRemove.Count;
-                for (int i = 0; i < c; i++)
+                if (c > 0)
                 {
-                    workingTimers.Remove(toRemove[i]);
+                    for (int i = 0; i < c; i++)
+                    {
+                        workingTimers.Remove(toRemove[i]);
+                    }
+                    toRemove.Clear();
                 }
-                toRemove.Clear();
             }
 
             //attempt to get used timer from pool or make new
@@ -287,13 +293,13 @@ namespace USS.Timers
 
             public static void registerTimer(Timer timer)
             {
-                timer.wasDestroyed = false;
+                timer.WasDestroyed = false;
                 workingTimers.Add(timer);
             }
             //We do this at the end of timer lifecycle or when we destroy it
             public static void ReleaseTimer(Timer timer)
             {
-                if (timer.wasDestroyed)
+                if (timer.WasDestroyed)
                     return;
                 freeTimers.Add(timer);
 
@@ -305,10 +311,22 @@ namespace USS.Timers
 
                 timer.behavior = null;
                 timer.behaviorBase.ResetEntity();
-                timer.wasDestroyed = true;
+                timer.WasDestroyed = true;
                 toRemove.Add(timer);
             }
 
         }
+
+
+
+        public static void KillAll()
+        {
+            int c = TimerManager.workingTimers.Count;
+            for (int i = 0; i < c; i++)
+            {
+                TimerManager.workingTimers[i].Destroy();
+            }
+        }
+
     }
 }
