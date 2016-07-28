@@ -213,6 +213,7 @@ public partial class Timer
             paramC1 = paramC2 = null;
             f1 = f2 = f3 = f4 = 0f;
             timer = null;
+            
 
             return this;
         }
@@ -357,6 +358,7 @@ public partial class Timer
                 behaviors.Add(btype, new List<ITimerBehavior>());
             behaviors[btype].Add(timer.behavior);
 
+            timer.Paused = false;
             timer.behavior = null;
             timer.behaviorBase.ResetEntity();
             timer.WasDestroyed = true;
