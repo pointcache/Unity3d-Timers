@@ -6,7 +6,12 @@ This is timer framework, a way to have generic poolable(reusable) timer with cus
 Example usage- 
 Simple examples:
 ``` csharp
-public class Test : MonoBehaviour
+using UnityEngine;
+using System.Collections;
+using USS.Timers;
+namespace USS.Timers
+{
+    public class Test : MonoBehaviour
     {
 
         // Use this for initialization
@@ -16,16 +21,36 @@ public class Test : MonoBehaviour
             Timer.Repeater(5f, () => Debug.Log("Repeater test"));
             //Start countdown and call Draw in 2.5 seconds
             Timer.Countdown(2.5f, Draw);
+
             //Start countdown and tell it to ignore Time Scale
             Timer.Countdown(10f, () => Debug.Log("Terminating Countdown #2")).SetIgnoreTimeScale(true);
             //Start a repeater, if we try to destroy it manually it wont take effect as countdown self destructs on reaching end.
             Timer timer = Timer.Countdown(1f, null);
-            timer.SetCallbacks(() => { Debug.Log("Destroyed timer:" + timer.GetHashCode()); timer.Destroy(); });
+            timer.SetCallbacks(() =>
+            {
+                Debug.Log("Destroyed timer:" + timer.GetHashCode()); timer.Destroy();
+            });
             //After we launched sphere repeater we will change its update speed in 8 seconds
             Timer.Countdown(8f, () => sphereRepeater.MainInterval = 0.01f);
             //Create a timer and modify callback afterwards
             Timer t = Timer.Countdown(10f, null);
             t.SetCallbacks(() => Debug.Log("Delayed Callback"));
+            //Pause it
+            t.Pause();
+            //Resume it
+            t.Unpause();
+
+            //Make eternal self reseting timer
+            Timer toreset = Timer.Countdown(1f, null  );
+            //mark as non disposable
+            toreset.DontDisposeOnComplete = true;
+            //in callback it resets itself
+            toreset.SetCallbacks(() =>
+            {
+                print("resetting timer" + toreset.GetHashCode().ToString());
+                toreset.Reset();
+            });
+
             //Test performance this will create ~500 timers and will rotate them afterwards in the pool eternally with no GC
             Timer.Repeater(.01f, SpawnTimers);
         }
@@ -60,5 +85,6 @@ public class Test : MonoBehaviour
             go.transform.position = pos;
         }
     }
+}
 
 ```
