@@ -9,52 +9,55 @@ About:
 Usage:
 
 ``` csharp
-  //Start simple repeater 
-  Timer.Repeater(5f, () => Debug.Log("Repeater test"));
-  //Start countdown and call Draw in 2.5 seconds
-  Timer.Countdown(2.5f, Draw);
-  ```
+//Start simple repeater 
+Timer.Repeater(5f, () => Debug.Log("Repeater test"));
+//Start countdown and call Draw in 2.5 seconds
+Timer.Countdown(2.5f, Draw);
+```
   
-  Concept:
-  A manager class pools and constructs new timers, timer store up to 4 handlers, and arbitrarely raise events in 
-  concrete implementation.
-  
-  ``` csharp
-  private class CountdownBehavior : TimerBehaviorBase, ITimerBehavior
+Concept:
+A manager class pools and constructs new timers, timer store up to 4 handlers, and arbitrarely raise events in 
+concrete implementation.
+
+``` csharp
+private class CountdownBehavior : TimerBehaviorBase, ITimerBehavior
+{
+    float exitTime;
+    public void Initialize()
     {
-        float exitTime;
-        public void Initialize()
-        {
-            exitTime = f1;
-        }
+        exitTime = f1;
+    }
 
-        public void Update(float deltaTime)
-        {
-            TimePassed += deltaTime;
-            TotalTimeActive += deltaTime;
+    public void Update(float deltaTime)
+    {
+        TimePassed += deltaTime;
+        TotalTimeActive += deltaTime;
 
-            if (TimePassed > exitTime)
-            {
-                Completed = true;
-                c1();
-            }
+        if (TimePassed > exitTime)
+        {
+            Completed = true;
+            c1();
         }
     }
-    ```
+}
+
+```
+
 Countdown inherits TimerBehaviorBase and implements ITimerBehavior.
 On top of that only concrete behavior in implemented that uses data and callbacks provided in constructor:
 
 ``` csharp
-    public static Timer Countdown(float exitTime, Action callback)
-    {
-        Timer timer = TimerManager.getTimer();
-        timer.SetBehavior<CountdownBehavior>();
-        timer.behaviorBase
-            .SetFloats(exitTime, 0, 0, 0)
-            .SetCallbacks(callback, null, null, null);
-        timer.behavior.Initialize();
-        return timer;
-    }
+public static Timer Countdown(float exitTime, Action callback)
+{
+    Timer timer = TimerManager.getTimer();
+    timer.SetBehavior<CountdownBehavior>();
+    timer.behaviorBase
+        .SetFloats(exitTime, 0, 0, 0)
+        .SetCallbacks(callback, null, null, null);
+    timer.behavior.Initialize();
+    return timer;
+}
+
 ```
 
 as you can see you can set 4 floats, and 4 callbacks and use them in your implementation of behavior as you like.
